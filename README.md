@@ -1,10 +1,12 @@
-# Race Circuit for Garmin Venu 3
+# Race Circuit for Garmin Watches
 
-An independent, configurable race-training companion for a common eight-run,
-eight-station fitness-race format. It can also time a single workout station.
+An independent, configurable companion app for Garmin watches, built for
+training toward fitness competitions such as HYROX. It supports the common
+eight-run, eight-station race format and can also time a single workout station.
 
 This project is unaffiliated with and not endorsed by any race organizer or
-fitness brand. Product and company names are intentionally omitted from the app.
+fitness brand. HYROX is a trademark of its respective owner and is used here
+only to describe the type of competition the app can help athletes train for.
 
 ## Screenshots
 
@@ -56,9 +58,17 @@ session results.
 
 ## Requirements
 
-- Garmin Connect IQ SDK Manager with the Venu 3 device package
+- Garmin Connect IQ SDK Manager with a supported device package
 - Java runtime supported by the installed Connect IQ SDK
 - A local Connect IQ developer key
+
+## Supported watches
+
+- Garmin Venu 3
+- Garmin Venu 3S
+- Garmin Forerunner 265
+- Garmin Forerunner 265S
+- Garmin Forerunner 965
 
 ## Build
 
@@ -71,10 +81,10 @@ The resulting `bin/RaceCircuit.prg` file is also excluded from Git.
 
 ## Release downloads
 
-Publishing a GitHub Release automatically builds `RaceCircuit-Venu3.prg` and
-attaches it to that release together with a SHA-256 checksum. Before publishing
-the first release, add these repository secrets under **Settings > Secrets and
-variables > Actions**:
+Publishing a GitHub Release automatically builds a separate PRG for every
+supported watch and attaches each file to that release together with its own
+SHA-256 checksum. Before publishing the first release, add these repository
+secrets under **Settings > Secrets and variables > Actions**:
 
 - `GARMIN_USERNAME`: Garmin account used by the Connect IQ SDK Manager
 - `GARMIN_PASSWORD`: password for that Garmin account
@@ -92,10 +102,11 @@ the workflow builds the tagged source and adds the installable PRG to the
 release's **Assets** section. A failed build can be rerun from the Actions page;
 the workflow can also be started manually for an existing release tag.
 
-## Install on a Venu 3
+## Install on a supported Garmin watch
 
-Connect the watch by USB and copy the local `bin/RaceCircuit.prg` or downloaded
-`RaceCircuit-Venu3.prg` to `Internal Storage/GARMIN/Apps`.
+Download the PRG whose filename matches the watch model. Connect the watch by
+USB and copy that file to `Internal Storage/GARMIN/Apps`. The local
+`bin/RaceCircuit.prg` build continues to target the Venu 3 by default.
 
 ## Privacy
 

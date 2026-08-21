@@ -19,11 +19,33 @@ concurrency:
 
 jobs:
   build:
-    name: Build Venu 3 app
+    name: Build ${{ matrix.watch_name }}
     runs-on: ubuntu-24.04
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - device_id: venu3
+            watch_name: Venu 3
+            artifact_name: RaceCircuit-Venu3.prg
+          - device_id: venu3s
+            watch_name: Venu 3S
+            artifact_name: RaceCircuit-Venu3S.prg
+          - device_id: fr265
+            watch_name: Forerunner 265
+            artifact_name: RaceCircuit-Forerunner265.prg
+          - device_id: fr265s
+            watch_name: Forerunner 265S
+            artifact_name: RaceCircuit-Forerunner265S.prg
+          - device_id: fr965
+            watch_name: Forerunner 965
+            artifact_name: RaceCircuit-Forerunner965.prg
     env:
       RELEASE_TAG: ${{ github.event.release.tag_name || inputs.tag }}
+      DEVICE_ID: ${{ matrix.device_id }}
+      WATCH_NAME: ${{ matrix.watch_name }}
+      ARTIFACT_NAME: ${{ matrix.artifact_name }}
       SDK_MANAGER_VERSION: 0.8.4
       SDK_MANAGER_SHA256: 5d57b8f9cfcd02d3b3f48e19d6daca0480e4c6f627926f15d8617ef8a6f57e0b
       CONNECT_IQ_SDK_VERSION: 9.2.0
@@ -54,7 +76,7 @@ jobs:
           tar --extract --gzip --file "$archive" --directory "$install_dir"
           echo "$install_dir" >> "$GITHUB_PATH"
 
-      - name: Install Connect IQ SDK and Venu 3 device files
+      - name: Install Connect IQ SDK and device files
         shell: bash
         env:
           GARMIN_USERNAME: ${{ secrets.GARMIN_USERNAME }}
@@ -68,7 +90,7 @@ jobs:
           connect-iq-sdk-manager agreement accept --agreement-hash "$GARMIN_AGREEMENT_HASH"
           connect-iq-sdk-manager login
           connect-iq-sdk-manager sdk set "$CONNECT_IQ_SDK_VERSION"
-          connect-iq-sdk-manager device download --device venu3
+          connect-iq-sdk-manager device download --device "$DEVICE_ID"
 
           sdk_bin="$(connect-iq-sdk-manager sdk current-path --bin)"
           echo "$sdk_bin" >> "$GITHUB_PATH"
@@ -98,17 +120,22 @@ jobs:
         run: |
           mkdir --parents dist
           monkeyc \
-            -d venu3 \
+            -d "$DEVICE_ID" \
             -f monkey.jungle \
-            -o dist/RaceCircuit-Venu3.prg \
+            -o "dist/$ARTIFACT_NAME" \
             -y "$DEVELOPER_KEY" \
             -r \
             -O 2 \
             -l 1 \
             -w
 
-          sha256sum dist/RaceCircuit-Venu3.prg > dist/SHA256SUMS.txt
-          test -s dist/RaceCircuit-Venu3.prg
+          checksum_name="${ARTIFACT_NAME}.sha256"
+          (
+            cd dist
+            sha256sum "$ARTIFACT_NAME" > "$checksum_name"
+          )
+          test -s "dist/$ARTIFACT_NAME"
+          echo "CHECKSUM_NAME=$checksum_name" >> "$GITHUB_ENV"
 
       - name: Attach downloads to the GitHub release
         shell: bash
@@ -116,10 +143,10 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release upload "$RELEASE_TAG" \
-            dist/RaceCircuit-Venu3.prg \
-            dist/SHA256SUMS.txt \
+            "dist/$ARTIFACT_NAME" \
+            "dist/$CHECKSUM_NAME" \
             --clobber
 
-          echo "### Release downloads" >> "$GITHUB_STEP_SUMMARY"
-          echo "- RaceCircuit-Venu3.prg" >> "$GITHUB_STEP_SUMMARY"
-          echo "- SHA256SUMS.txt" >> "$GITHUB_STEP_SUMMARY"
+          echo "### $WATCH_NAME release download" >> "$GITHUB_STEP_SUMMARY"
+          echo "- $ARTIFACT_NAME" >> "$GITHUB_STEP_SUMMARY"
+          echo "- $CHECKSUM_NAME" >> "$GITHUB_STEP_SUMMARY"
