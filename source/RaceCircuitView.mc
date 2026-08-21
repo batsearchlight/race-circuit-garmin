@@ -328,7 +328,7 @@ class RaceCircuitView extends Ui.View {
 
         var count = getSetupChoiceCount();
         var top = (height * 24) / 100;
-        var areaHeight = (height * 56) / 100;
+        var areaHeight = (height * 50) / 100;
         var rowHeight = areaHeight / count;
         var selected = (y - top) / rowHeight;
 
@@ -883,14 +883,16 @@ class RaceCircuitView extends Ui.View {
             drawChoiceSetup(dc);
         }
 
-        dc.setColor(0x596A75, Gfx.COLOR_TRANSPARENT);
-        dc.drawText(
-            centerX,
-            (height * 92) / 100,
-            Gfx.FONT_XTINY,
-            "RECHTS WISCHEN: ENDE",
-            Gfx.TEXT_JUSTIFY_CENTER
-        );
+        if (_setupStep != 3 || _singleMode) {
+            dc.setColor(0x596A75, Gfx.COLOR_TRANSPARENT);
+            dc.drawText(
+                centerX,
+                (height * 84) / 100,
+                Gfx.FONT_XTINY,
+                "RECHTS: ENDE",
+                Gfx.TEXT_JUSTIFY_CENTER
+            );
+        }
     }
 
     function getSetupTitle() {
@@ -928,7 +930,7 @@ class RaceCircuitView extends Ui.View {
         var height = dc.getHeight();
         var count = getSetupChoiceCount();
         var top = (height * 24) / 100;
-        var areaHeight = (height * 56) / 100;
+        var areaHeight = (height * 50) / 100;
         var rowHeight = areaHeight / count;
 
         for (var index = 0; index < count; index += 1) {
@@ -961,7 +963,7 @@ class RaceCircuitView extends Ui.View {
         dc.setColor(0x83939D, Gfx.COLOR_TRANSPARENT);
         dc.drawText(
             width / 2,
-            (height * 83) / 100,
+            (height * 75) / 100,
             Gfx.FONT_XTINY,
             "WISCHEN + START",
             Gfx.TEXT_JUSTIFY_CENTER
@@ -972,14 +974,18 @@ class RaceCircuitView extends Ui.View {
         var width = dc.getWidth();
         var height = dc.getHeight();
         var centerX = width / 2;
+        var windowStart = _reorderIndex - 2;
+        if (windowStart < 0) {
+            windowStart = 0;
+        }
+        if (windowStart > _stationOrder.size() - 5) {
+            windowStart = _stationOrder.size() - 5;
+        }
 
-        for (var offset = -2; offset <= 2; offset += 1) {
-            var index = _reorderIndex + offset;
-            if (index < 0 || index >= _stationOrder.size()) {
-                continue;
-            }
-            var y = ((30 + ((offset + 2) * 10)) * height) / 100;
-            var selected = offset == 0;
+        for (var row = 0; row < 5; row += 1) {
+            var index = windowStart + row;
+            var y = ((27 + (row * 9)) * height) / 100;
+            var selected = index == _reorderIndex;
             if (selected) {
                 dc.setColor(
                     _reorderMoving ? 0xFF8A3D : 0x00E6A8,
@@ -1016,7 +1022,7 @@ class RaceCircuitView extends Ui.View {
         dc.setColor(0x83939D, Gfx.COLOR_TRANSPARENT);
         dc.drawText(
             centerX,
-            (height * 75) / 100,
+            (height * 73) / 100,
             Gfx.FONT_XTINY,
             _reorderMoving ? "WISCHEN: VERSCHIEBEN" : "START: VERSCHIEBEN",
             Gfx.TEXT_JUSTIFY_CENTER
@@ -1024,7 +1030,7 @@ class RaceCircuitView extends Ui.View {
         dc.setColor(0x00E6A8, Gfx.COLOR_TRANSPARENT);
         dc.fillRoundedRectangle(
             (width * 29) / 100,
-            (height * 82) / 100,
+            (height * 81) / 100,
             (width * 42) / 100,
             (height * 9) / 100,
             20
@@ -1032,7 +1038,7 @@ class RaceCircuitView extends Ui.View {
         dc.setColor(Gfx.COLOR_BLACK, Gfx.COLOR_TRANSPARENT);
         dc.drawText(
             centerX,
-            (height * 83) / 100,
+            (height * 82) / 100,
             Gfx.FONT_XTINY,
             "MENU: FERTIG",
             Gfx.TEXT_JUSTIFY_CENTER

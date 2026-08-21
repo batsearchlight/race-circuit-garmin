@@ -6,6 +6,16 @@ eight-station fitness-race format. It can also time a single workout station.
 This project is unaffiliated with and not endorsed by any race organizer or
 fitness brand. Product and company names are intentionally omitted from the app.
 
+## Screenshots
+
+<p align="center">
+  <img src="docs/screenshots/setup.png" alt="Race mode setup in the Garmin Venu 3 simulator" width="31%">
+  <img src="docs/screenshots/order.png" alt="Workout order setup in the Garmin Venu 3 simulator" width="31%">
+  <img src="docs/screenshots/active.png" alt="Active training screen in the Garmin Venu 3 simulator" width="31%">
+</p>
+
+<p align="center"><sub>Garmin Venu 3 simulator: setup, station order, and active session.</sub></p>
+
 ## Features
 
 - Full race or single-station mode
