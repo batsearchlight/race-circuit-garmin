@@ -69,10 +69,33 @@ session results.
 The developer key is generated locally when needed and is excluded from Git.
 The resulting `bin/RaceCircuit.prg` file is also excluded from Git.
 
+## Release downloads
+
+Publishing a GitHub Release automatically builds `RaceCircuit-Venu3.prg` and
+attaches it to that release together with a SHA-256 checksum. Before publishing
+the first release, add these repository secrets under **Settings > Secrets and
+variables > Actions**:
+
+- `GARMIN_USERNAME`: Garmin account used by the Connect IQ SDK Manager
+- `GARMIN_PASSWORD`: password for that Garmin account
+- `CONNECTIQ_DEVELOPER_KEY_BASE64`: optional but recommended Base64-encoded
+  `developer_key.der`; using the same key allows future builds to update the app
+
+To encode the existing developer key in PowerShell without changing the file:
+
+```powershell
+[Convert]::ToBase64String([IO.File]::ReadAllBytes("developer_key.der"))
+```
+
+Create a release from **Releases > Draft a new release**. Once it is published,
+the workflow builds the tagged source and adds the installable PRG to the
+release's **Assets** section. A failed build can be rerun from the Actions page;
+the workflow can also be started manually for an existing release tag.
+
 ## Install on a Venu 3
 
-Connect the watch by USB and copy `bin/RaceCircuit.prg` to
-`Internal Storage/GARMIN/Apps`.
+Connect the watch by USB and copy the local `bin/RaceCircuit.prg` or downloaded
+`RaceCircuit-Venu3.prg` to `Internal Storage/GARMIN/Apps`.
 
 ## Privacy
 
