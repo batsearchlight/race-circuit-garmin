@@ -102,16 +102,13 @@ jobs:
         run: |
           key="$RUNNER_TEMP/developer_key.der"
 
-          if [[ -n "$DEVELOPER_KEY_BASE64" ]]; then
-            printf '%s' "$DEVELOPER_KEY_BASE64" | base64 --decode > "$key"
-          else
-            openssl genrsa -out "$RUNNER_TEMP/developer_key.pem" 4096
-            openssl pkcs8 -topk8 -inform PEM -outform DER \
-              -in "$RUNNER_TEMP/developer_key.pem" \
-              -out "$key" \
-              -nocrypt
-            echo "CONNECTIQ_DEVELOPER_KEY_BASE64 is not set; this release uses an ephemeral signing key." >> "$GITHUB_STEP_SUMMARY"
+          if [[ -z "$DEVELOPER_KEY_BASE64" ]]; then
+            echo "Missing release signing key repository secret." >&2
+            exit 1
           fi
+
+          printf '%s' "$DEVELOPER_KEY_BASE64" | base64 --decode > "$key"
+          test -s "$key"
 
           echo "DEVELOPER_KEY=$key" >> "$GITHUB_ENV"
 

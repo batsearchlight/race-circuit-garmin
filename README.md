@@ -4,9 +4,11 @@ An independent, configurable companion app for Garmin watches, built for
 training toward fitness competitions such as HYROX. It supports the common
 eight-run, eight-station race format and can also time a single workout station.
 
-This project is unaffiliated with and not endorsed by any race organizer or
-fitness brand. HYROX is a trademark of its respective owner and is used here
-only to describe the type of competition the app can help athletes train for.
+This project is unaffiliated with and not endorsed by Garmin, HYROX, any race
+organizer, or any fitness brand. Garmin and Connect IQ are trademarks of Garmin
+Ltd. or its subsidiaries. HYROX is a trademark of its respective owner. Those
+names are used only to describe compatibility and the type of competition the
+app can help athletes train for.
 
 ## Screenshots
 
@@ -97,24 +99,8 @@ The resulting `bin/RaceCircuit.prg` file is also excluded from Git.
 
 Publishing a GitHub Release automatically builds a separate PRG for every
 supported watch and attaches each file to that release together with its own
-SHA-256 checksum. Before publishing the first release, add these repository
-secrets under **Settings > Secrets and variables > Actions**:
-
-- `GARMIN_USERNAME`: Garmin account used by the Connect IQ SDK Manager
-- `GARMIN_PASSWORD`: password for that Garmin account
-- `CONNECTIQ_DEVELOPER_KEY_BASE64`: optional but recommended Base64-encoded
-  `developer_key.der`; using the same key allows future builds to update the app
-
-To encode the existing developer key in PowerShell without changing the file:
-
-```powershell
-[Convert]::ToBase64String([IO.File]::ReadAllBytes("developer_key.der"))
-```
-
-Create a release from **Releases > Draft a new release**. Once it is published,
-the workflow builds the tagged source and adds the installable PRG to the
-release's **Assets** section. A failed build can be rerun from the Actions page;
-the workflow can also be started manually for an existing release tag.
+SHA-256 checksum. Release automation and signing credentials are maintained by
+the repository maintainers.
 
 ## Install on a supported Garmin watch
 
@@ -126,3 +112,13 @@ USB and copy that file to `Internal Storage/GARMIN/Apps`. The local
 
 The app has no network integration, account system, analytics, or embedded user
 identity. It reads live heart-rate sensor data only while the app is open.
+
+## Contributing
+
+Bug reports and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md)
+for the development workflow and [SECURITY.md](SECURITY.md) for private security
+reports.
+
+## License
+
+Licensed under the [MIT License](LICENSE).
