@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<iq:manifest version="3"
+             xmlns:iq="http://www.garmin.com/xml/connectiq">
+    <iq:application
+        id="e5090e38156a4c359c21b07a087a7b14"
+        type="watch-app"
+        name="@Strings.AppName"
+        entry="RaceCircuitApp"
+        launcherIcon="@Drawables.LauncherIcon"
+        minApiLevel="3.2.0">
+        <iq:products>
+            <iq:product id="venu3"/>
+        </iq:products>
+        <iq:permissions>
+            <iq:uses-permission id="Sensor"/>
+        </iq:permissions>
+        <iq:languages>
+            <iq:language>deu</iq:language>
+        </iq:languages>
+    </iq:application>
+</iq:manifest>

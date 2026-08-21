@@ -1,0 +1,17 @@
+bin/
+developer_key.der
+developer_key.pem
+*.debug.xml
+.agents/
+.codex/
+.idea/
+.vscode/
+*.jks
+*.keystore
+*.p12
+*.pfx
+*.key
+*.pem
+*.der
+*.env
+.env.*
