@@ -33,8 +33,11 @@ only to describe the type of competition the app can help athletes train for.
 - Freely reorderable workout stations
 - Current segment, segment time, total time, and progress
 - Large, color-coded live heart-rate display
+- Adjustable yellow and red heart-rate thresholds
+- Optional vibration cues: one short warning on entering red, two short "go"
+  pulses after recovering to 12 BPM below the red threshold
 - Division-specific loads and scaled distances/repetitions
-- Vibration feedback for heart-rate thresholds and segment changes
+- Optional vibration feedback for session and segment changes
 - Undo protection for accidental segment changes
 - Post-session timing summary
 - Exit by swiping right before a session starts
@@ -47,6 +50,8 @@ session results.
 
 - First setup step: choose English, German, or French
 - Swipe in setup: change selection
+- Heart-rate zone setup: swipe or tap left/right to adjust one BPM at a time
+- Vibration setup: enable or disable all app vibration cues
 - Start key: confirm a selection
 - Start key on the order screen: enter or leave move mode
 - Swipe in move mode: move the selected station
@@ -55,6 +60,15 @@ session results.
 - Start key during training: start or advance to the next segment
 - Back key twice within two seconds during training: undo one segment
 - Menu key after finishing: reset the session
+
+## Heart-rate vibration cues
+
+When vibrations are enabled, entering the configured red zone produces one
+short warning pulse. The warning remains locked even if heart rate briefly
+drops and rises again. Reaching 12 BPM below the red threshold produces two
+short "go" pulses and rearms the next red-zone warning. For example, with red
+set to 180 BPM: `180` warns, `174 -> 192` stays silent, and `160` signals "go"
+and rearms the warning.
 
 ## Requirements
 

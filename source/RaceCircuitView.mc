@@ -22,6 +22,9 @@ class RaceCircuitView extends Ui.View {
     private var _singleMode = false;
     private var _division = 1;
     private var _scalePercent = 100;
+    private var _vibrationsEnabled = true;
+    private var _yellowThreshold = 160;
+    private var _redThreshold = 180;
     private var _reorderIndex = 0;
     private var _reorderMoving = false;
     private var _started = false;
@@ -30,7 +33,7 @@ class RaceCircuitView extends Ui.View {
     private var _debriefPage = 0;
     private var _heartRate = null;
     private var _previousHeartRate = null;
-    private var _lastHeartRateAlertTime = null;
+    private var _redAlertArmed = true;
     private var _lastBackPressTime = null;
     private var _startTime = 0;
     private var _segmentStartTime = 0;
@@ -110,22 +113,22 @@ class RaceCircuitView extends Ui.View {
         if (sensorInfo.heartRate != null) {
             var nextHeartRate = sensorInfo.heartRate;
 
-            if (_started && !_finished && _previousHeartRate != null) {
-                var crossedYellow =
-                    _previousHeartRate <= 160 && nextHeartRate > 160;
-                var crossedRed =
-                    _previousHeartRate < 180 && nextHeartRate >= 180;
+            if (_started && !_finished) {
+                var crossedIntoRed =
+                    _redAlertArmed &&
+                    nextHeartRate >= _redThreshold &&
+                    (_previousHeartRate == null ||
+                        _previousHeartRate < _redThreshold);
+                var recovered =
+                    !_redAlertArmed &&
+                    nextHeartRate <= getRecoveryThreshold();
 
-                if (crossedYellow || crossedRed) {
-                    var now = System.getTimer();
-                    var cooldownFinished =
-                        _lastHeartRateAlertTime == null ||
-                        now - _lastHeartRateAlertTime >= 60000;
-
-                    if (cooldownFinished) {
-                        heartRateAlertBuzz(crossedRed);
-                        _lastHeartRateAlertTime = now;
-                    }
+                if (crossedIntoRed) {
+                    dangerBuzz();
+                    _redAlertArmed = false;
+                } else if (recovered) {
+                    recoveryBuzz();
+                    _redAlertArmed = true;
                 }
             }
 
@@ -148,6 +151,8 @@ class RaceCircuitView extends Ui.View {
             _started = true;
             _startTime = now;
             _segmentStartTime = now;
+            _previousHeartRate = null;
+            _redAlertArmed = true;
             buzz(80, 180);
             Ui.requestUpdate();
             return;
@@ -270,6 +275,12 @@ class RaceCircuitView extends Ui.View {
         if (_setupStep == 3) {
             return 3;
         }
+        if (_setupStep == 4) {
+            return 2;
+        }
+        if (_setupStep == 5 || _setupStep == 6) {
+            return 0;
+        }
         return 8;
     }
 
@@ -284,6 +295,12 @@ class RaceCircuitView extends Ui.View {
             _setupSelection = _scalePercent == 25
                 ? 0
                 : (_scalePercent == 50 ? 1 : 2);
+        } else if (_setupStep == 4) {
+            _setupSelection = _vibrationsEnabled ? 0 : 1;
+        } else if (_setupStep == 5) {
+            _setupSelection = _yellowThreshold;
+        } else if (_setupStep == 6) {
+            _setupSelection = _redThreshold;
         } else {
             _setupSelection = _reorderIndex;
         }
@@ -309,6 +326,21 @@ class RaceCircuitView extends Ui.View {
                 ? 25
                 : (_setupSelection == 1 ? 50 : 100);
             _setupStep = 4;
+            syncSetupSelection();
+        } else if (_setupStep == 4) {
+            _vibrationsEnabled = _setupSelection == 0;
+            _setupStep = 5;
+            syncSetupSelection();
+        } else if (_setupStep == 5) {
+            _yellowThreshold = _setupSelection;
+            if (_redThreshold < _yellowThreshold + 5) {
+                _redThreshold = _yellowThreshold + 5;
+            }
+            _setupStep = 6;
+            syncSetupSelection();
+        } else if (_setupStep == 6) {
+            _redThreshold = _setupSelection;
+            _setupStep = 7;
             _reorderIndex = 0;
             syncSetupSelection();
         } else if (_singleMode) {
@@ -321,7 +353,22 @@ class RaceCircuitView extends Ui.View {
     }
 
     function moveSetupSelection(delta) {
-        if (_setupStep == 4 && !_singleMode && _reorderMoving) {
+        if (_setupStep == 5) {
+            _setupSelection += delta;
+            if (_setupSelection < 100) {
+                _setupSelection = 100;
+            } else if (_setupSelection > 195) {
+                _setupSelection = 195;
+            }
+        } else if (_setupStep == 6) {
+            _setupSelection += delta;
+            var minimumRed = _yellowThreshold + 5;
+            if (_setupSelection < minimumRed) {
+                _setupSelection = minimumRed;
+            } else if (_setupSelection > 220) {
+                _setupSelection = 220;
+            }
+        } else if (_setupStep == 7 && !_singleMode && _reorderMoving) {
             var target = _reorderIndex + delta;
             if (target < 0 || target >= _stationOrder.size()) {
                 return;
@@ -334,7 +381,7 @@ class RaceCircuitView extends Ui.View {
         } else {
             var count = getSetupChoiceCount();
             _setupSelection = (_setupSelection + delta + count) % count;
-            if (_setupStep == 4 && !_singleMode) {
+            if (_setupStep == 7 && !_singleMode) {
                 _reorderIndex = _setupSelection;
             }
         }
@@ -342,12 +389,20 @@ class RaceCircuitView extends Ui.View {
     }
 
     function handleSetupTap(x, y, width, height) {
-        if (_setupStep == 4 && !_singleMode) {
+        if (_setupStep == 7 && !_singleMode) {
             if (y >= (height * 82) / 100) {
                 finishSetup();
             } else if (y >= (height * 28) / 100 &&
                 y <= (height * 72) / 100) {
                 confirmSetup();
+            }
+            return;
+        }
+
+        if (_setupStep == 5 || _setupStep == 6) {
+            if (y >= (height * 24) / 100 &&
+                y <= (height * 74) / 100) {
+                moveSetupSelection(x < width / 2 ? -1 : 1);
             }
             return;
         }
@@ -493,7 +548,7 @@ class RaceCircuitView extends Ui.View {
     }
 
     function handleHold() {
-        if (!_configured && _setupStep == 4 && !_singleMode) {
+        if (!_configured && _setupStep == 7 && !_singleMode) {
             finishSetup();
             return;
         }
@@ -511,7 +566,8 @@ class RaceCircuitView extends Ui.View {
         _startTime = 0;
         _segmentStartTime = 0;
         _finishTime = 0;
-        _lastHeartRateAlertTime = null;
+        _previousHeartRate = null;
+        _redAlertArmed = true;
         _lastBackPressTime = null;
 
         for (var index = 0; index < _splits.size(); index += 1) {
@@ -523,12 +579,20 @@ class RaceCircuitView extends Ui.View {
     }
 
     function buzz(strength, duration) {
+        if (!_vibrationsEnabled) {
+            return;
+        }
+
         Attention.vibrate([
             new Attention.VibeProfile(strength, duration)
         ]);
     }
 
     function finishBuzz() {
+        if (!_vibrationsEnabled) {
+            return;
+        }
+
         Attention.vibrate([
             new Attention.VibeProfile(100, 180),
             new Attention.VibeProfile(0, 100),
@@ -536,14 +600,30 @@ class RaceCircuitView extends Ui.View {
         ]);
     }
 
-    function heartRateAlertBuzz(isRed) {
-        var strength = isRed ? 100 : 70;
+    function dangerBuzz() {
+        if (!_vibrationsEnabled) {
+            return;
+        }
 
         Attention.vibrate([
-            new Attention.VibeProfile(strength, 110),
-            new Attention.VibeProfile(0, 70),
-            new Attention.VibeProfile(strength, 110)
+            new Attention.VibeProfile(100, 180)
         ]);
+    }
+
+    function recoveryBuzz() {
+        if (!_vibrationsEnabled) {
+            return;
+        }
+
+        Attention.vibrate([
+            new Attention.VibeProfile(80, 110),
+            new Attention.VibeProfile(0, 80),
+            new Attention.VibeProfile(80, 110)
+        ]);
+    }
+
+    function getRecoveryThreshold() {
+        return _redThreshold - 12;
     }
 
     function formatDuration(milliseconds) {
@@ -607,10 +687,10 @@ class RaceCircuitView extends Ui.View {
         if (_heartRate == null) {
             return 0x83939D;
         }
-        if (_heartRate <= 160) {
+        if (_heartRate < _yellowThreshold) {
             return 0x00E6A8;
         }
-        if (_heartRate < 180) {
+        if (_heartRate < _redThreshold) {
             return 0xFFD447;
         }
 
@@ -893,7 +973,7 @@ class RaceCircuitView extends Ui.View {
             (height * 7) / 100,
             Gfx.FONT_XTINY,
             tr("SETUP ", "SETUP ", "REGLAGE ") +
-                (_setupStep + 1).format("%d") + "/5",
+                (_setupStep + 1).format("%d") + "/8",
             Gfx.TEXT_JUSTIFY_CENTER
         );
         dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_TRANSPARENT);
@@ -905,13 +985,15 @@ class RaceCircuitView extends Ui.View {
             Gfx.TEXT_JUSTIFY_CENTER
         );
 
-        if (_setupStep == 4 && !_singleMode) {
+        if (_setupStep == 7 && !_singleMode) {
             drawOrderSetup(dc);
+        } else if (_setupStep == 5 || _setupStep == 6) {
+            drawZoneSetup(dc);
         } else {
             drawChoiceSetup(dc);
         }
 
-        if (_setupStep != 4 || _singleMode) {
+        if (_setupStep != 7 || _singleMode) {
             dc.setColor(0x596A75, Gfx.COLOR_TRANSPARENT);
             dc.drawText(
                 centerX,
@@ -935,6 +1017,15 @@ class RaceCircuitView extends Ui.View {
         }
         if (_setupStep == 3) {
             return tr("SCALE", "UMFANG", "FORMAT");
+        }
+        if (_setupStep == 4) {
+            return tr("VIBRATIONS", "VIBRATION", "VIBRATIONS");
+        }
+        if (_setupStep == 5) {
+            return tr("YELLOW ZONE", "GELBE ZONE", "ZONE JAUNE");
+        }
+        if (_setupStep == 6) {
+            return tr("RED ZONE", "ROTE ZONE", "ZONE ROUGE");
         }
         return _singleMode
             ? tr("EXERCISE", "UEBUNG", "EXERCICE")
@@ -963,6 +1054,11 @@ class RaceCircuitView extends Ui.View {
         if (_setupStep == 3) {
             var scales = ["25 %", "50 %", "100 %"];
             return scales[index];
+        }
+        if (_setupStep == 4) {
+            return index == 0
+                ? tr("VIBRATIONS ON", "VIBRATION AN", "VIBRATIONS OUI")
+                : tr("VIBRATIONS OFF", "VIBRATION AUS", "VIBRATIONS NON");
         }
         return _stationNames[index];
     }
@@ -1008,6 +1104,90 @@ class RaceCircuitView extends Ui.View {
             (height * 75) / 100,
             Gfx.FONT_XTINY,
             tr("SWIPE + START", "WISCHEN + START", "GLISSER + START"),
+            Gfx.TEXT_JUSTIFY_CENTER
+        );
+    }
+
+    function drawZoneSetup(dc) {
+        var width = dc.getWidth();
+        var height = dc.getHeight();
+        var centerX = width / 2;
+        var accent = _setupStep == 5 ? 0xFFD447 : 0xFF453A;
+
+        drawPanel(
+            dc,
+            (width * 17) / 100,
+            (height * 27) / 100,
+            (width * 66) / 100,
+            (height * 34) / 100,
+            24
+        );
+
+        dc.setColor(0x83939D, Gfx.COLOR_TRANSPARENT);
+        dc.drawText(
+            (width * 28) / 100,
+            (height * 38) / 100,
+            Gfx.FONT_MEDIUM,
+            "-",
+            Gfx.TEXT_JUSTIFY_CENTER
+        );
+        dc.drawText(
+            (width * 72) / 100,
+            (height * 38) / 100,
+            Gfx.FONT_MEDIUM,
+            "+",
+            Gfx.TEXT_JUSTIFY_CENTER
+        );
+
+        dc.setColor(accent, Gfx.COLOR_TRANSPARENT);
+        dc.drawText(
+            centerX,
+            (height * 32) / 100,
+            Gfx.FONT_NUMBER_MILD,
+            _setupSelection.format("%d"),
+            Gfx.TEXT_JUSTIFY_CENTER
+        );
+        dc.drawText(
+            centerX,
+            (height * 53) / 100,
+            Gfx.FONT_XTINY,
+            "BPM",
+            Gfx.TEXT_JUSTIFY_CENTER
+        );
+
+        dc.setColor(accent, Gfx.COLOR_TRANSPARENT);
+        dc.drawText(
+            centerX,
+            (height * 65) / 100,
+            Gfx.FONT_XTINY,
+            _setupStep == 5
+                ? tr("YELLOW FROM", "GELB AB", "JAUNE A")
+                : tr("RED FROM", "ROT AB", "ROUGE A"),
+            Gfx.TEXT_JUSTIFY_CENTER
+        );
+
+        if (_setupStep == 6) {
+            dc.setColor(0x00E6A8, Gfx.COLOR_TRANSPARENT);
+            dc.drawText(
+                centerX,
+                (height * 71) / 100,
+                Gfx.FONT_XTINY,
+                tr("GO AT ", "GO BEI ", "GO A ") +
+                    (_setupSelection - 12).format("%d") + " BPM",
+                Gfx.TEXT_JUSTIFY_CENTER
+            );
+        }
+
+        dc.setColor(0x83939D, Gfx.COLOR_TRANSPARENT);
+        dc.drawText(
+            centerX,
+            (height * 77) / 100,
+            Gfx.FONT_XTINY,
+            tr(
+                "SWIPE +/-  START: OK",
+                "WISCHEN +/-  START",
+                "GLISSER +/-  START"
+            ),
             Gfx.TEXT_JUSTIFY_CENTER
         );
     }
