@@ -95,13 +95,6 @@ and rearms the warning.
 The developer key is generated locally when needed and is excluded from Git.
 The resulting `bin/RaceCircuit.prg` file is also excluded from Git.
 
-## Release downloads
-
-Publishing a GitHub Release automatically builds a separate PRG for every
-supported watch and attaches each file to that release together with its own
-SHA-256 checksum. Release automation and signing credentials are maintained by
-the repository maintainers.
-
 ## Install on a supported Garmin watch
 
 Download the PRG whose filename matches the watch model. Connect the watch by
