@@ -18,6 +18,7 @@ class RaceCircuitView extends Ui.View {
     private var _configured = false;
     private var _setupStep = 0;
     private var _setupSelection = 0;
+    private var _language = 0;
     private var _singleMode = false;
     private var _division = 1;
     private var _scalePercent = 100;
@@ -43,16 +44,8 @@ class RaceCircuitView extends Ui.View {
         _isRun = [];
         _segmentStationIds = [];
 
-        _stationNames = [
-            "SKIERG",
-            "SLED PUSH",
-            "SLED PULL",
-            "BURPEES",
-            "ROW",
-            "FARMERS",
-            "LUNGES",
-            "W-BALLS"
-        ];
+        _stationNames = [];
+        updateStationNames();
 
         _stationOrder = [0, 1, 2, 3, 4, 5, 6, 7];
 
@@ -64,6 +57,29 @@ class RaceCircuitView extends Ui.View {
         ];
 
         _timer = new Timer.Timer();
+    }
+
+    function tr(english, german, french) {
+        if (_language == 1) {
+            return german;
+        }
+        if (_language == 2) {
+            return french;
+        }
+        return english;
+    }
+
+    function updateStationNames() {
+        _stationNames = [
+            "SKIERG",
+            tr("SLED PUSH", "SCHLITTEN DRUCK", "POUSSEE TRAINEAU"),
+            tr("SLED PULL", "SCHLITTEN ZUG", "TIRAGE TRAINEAU"),
+            "BURPEES",
+            tr("ROW", "RUDERN", "RAMEUR"),
+            "FARMERS",
+            tr("LUNGES", "AUSFALLSCHR.", "FENTES"),
+            tr("W-BALLS", "WALL BALLS", "WALL BALLS")
+        ];
     }
 
     function onShow() {
@@ -243,12 +259,15 @@ class RaceCircuitView extends Ui.View {
 
     function getSetupChoiceCount() {
         if (_setupStep == 0) {
-            return 2;
+            return 3;
         }
         if (_setupStep == 1) {
-            return 4;
+            return 2;
         }
         if (_setupStep == 2) {
+            return 4;
+        }
+        if (_setupStep == 3) {
             return 3;
         }
         return 8;
@@ -256,10 +275,12 @@ class RaceCircuitView extends Ui.View {
 
     function syncSetupSelection() {
         if (_setupStep == 0) {
-            _setupSelection = _singleMode ? 1 : 0;
+            _setupSelection = _language;
         } else if (_setupStep == 1) {
-            _setupSelection = _division;
+            _setupSelection = _singleMode ? 1 : 0;
         } else if (_setupStep == 2) {
+            _setupSelection = _division;
+        } else if (_setupStep == 3) {
             _setupSelection = _scalePercent == 25
                 ? 0
                 : (_scalePercent == 50 ? 1 : 2);
@@ -271,18 +292,23 @@ class RaceCircuitView extends Ui.View {
 
     function confirmSetup() {
         if (_setupStep == 0) {
-            _singleMode = _setupSelection == 1;
+            _language = _setupSelection;
+            updateStationNames();
             _setupStep = 1;
             syncSetupSelection();
         } else if (_setupStep == 1) {
-            _division = _setupSelection;
+            _singleMode = _setupSelection == 1;
             _setupStep = 2;
             syncSetupSelection();
         } else if (_setupStep == 2) {
+            _division = _setupSelection;
+            _setupStep = 3;
+            syncSetupSelection();
+        } else if (_setupStep == 3) {
             _scalePercent = _setupSelection == 0
                 ? 25
                 : (_setupSelection == 1 ? 50 : 100);
-            _setupStep = 3;
+            _setupStep = 4;
             _reorderIndex = 0;
             syncSetupSelection();
         } else if (_singleMode) {
@@ -295,7 +321,7 @@ class RaceCircuitView extends Ui.View {
     }
 
     function moveSetupSelection(delta) {
-        if (_setupStep == 3 && !_singleMode && _reorderMoving) {
+        if (_setupStep == 4 && !_singleMode && _reorderMoving) {
             var target = _reorderIndex + delta;
             if (target < 0 || target >= _stationOrder.size()) {
                 return;
@@ -308,7 +334,7 @@ class RaceCircuitView extends Ui.View {
         } else {
             var count = getSetupChoiceCount();
             _setupSelection = (_setupSelection + delta + count) % count;
-            if (_setupStep == 3 && !_singleMode) {
+            if (_setupStep == 4 && !_singleMode) {
                 _reorderIndex = _setupSelection;
             }
         }
@@ -316,7 +342,7 @@ class RaceCircuitView extends Ui.View {
     }
 
     function handleSetupTap(x, y, width, height) {
-        if (_setupStep == 3 && !_singleMode) {
+        if (_setupStep == 4 && !_singleMode) {
             if (y >= (height * 82) / 100) {
                 finishSetup();
             } else if (y >= (height * 28) / 100 &&
@@ -358,7 +384,8 @@ class RaceCircuitView extends Ui.View {
             addStationSegment(_stationOrder[0]);
         } else {
             for (var index = 0; index < _stationOrder.size(); index += 1) {
-                _names.add("RUN " + (index + 1).format("%d"));
+                _names.add(tr("RUN ", "LAUF ", "COURSE ") +
+                    (index + 1).format("%d"));
                 _details.add(getScaledDistance(1000) + " M");
                 _isRun.add(true);
                 _segmentStationIds.add(-1);
@@ -384,15 +411,15 @@ class RaceCircuitView extends Ui.View {
 
     function getDivisionName() {
         if (_division == 0) {
-            return "WOMEN OPEN";
+            return tr("WOMEN OPEN", "DAMEN OPEN", "FEMMES OPEN");
         }
         if (_division == 1) {
-            return "MEN OPEN";
+            return tr("MEN OPEN", "HERREN OPEN", "HOMMES OPEN");
         }
         if (_division == 2) {
-            return "WOMEN PRO";
+            return tr("WOMEN PRO", "DAMEN PRO", "FEMMES PRO");
         }
-        return "MEN PRO";
+        return tr("MEN PRO", "HERREN PRO", "HOMMES PRO");
     }
 
     function getStationDetail(station) {
@@ -466,7 +493,7 @@ class RaceCircuitView extends Ui.View {
     }
 
     function handleHold() {
-        if (!_configured && _setupStep == 3 && !_singleMode) {
+        if (!_configured && _setupStep == 4 && !_singleMode) {
             finishSetup();
             return;
         }
@@ -865,7 +892,8 @@ class RaceCircuitView extends Ui.View {
             centerX,
             (height * 7) / 100,
             Gfx.FONT_XTINY,
-            "SETUP " + (_setupStep + 1).format("%d") + "/4",
+            tr("SETUP ", "SETUP ", "REGLAGE ") +
+                (_setupStep + 1).format("%d") + "/5",
             Gfx.TEXT_JUSTIFY_CENTER
         );
         dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_TRANSPARENT);
@@ -877,19 +905,19 @@ class RaceCircuitView extends Ui.View {
             Gfx.TEXT_JUSTIFY_CENTER
         );
 
-        if (_setupStep == 3 && !_singleMode) {
+        if (_setupStep == 4 && !_singleMode) {
             drawOrderSetup(dc);
         } else {
             drawChoiceSetup(dc);
         }
 
-        if (_setupStep != 3 || _singleMode) {
+        if (_setupStep != 4 || _singleMode) {
             dc.setColor(0x596A75, Gfx.COLOR_TRANSPARENT);
             dc.drawText(
                 centerX,
                 (height * 84) / 100,
                 Gfx.FONT_XTINY,
-                "RECHTS: ENDE",
+                tr("RIGHT: EXIT", "RECHTS: ENDE", "DROITE: QUITTER"),
                 Gfx.TEXT_JUSTIFY_CENTER
             );
         }
@@ -897,28 +925,42 @@ class RaceCircuitView extends Ui.View {
 
     function getSetupTitle() {
         if (_setupStep == 0) {
-            return "MODUS";
+            return "LANGUAGE";
         }
         if (_setupStep == 1) {
-            return "DIVISION";
+            return tr("MODE", "MODUS", "MODE");
         }
         if (_setupStep == 2) {
-            return "UMFANG";
+            return "DIVISION";
         }
-        return _singleMode ? "UEBUNG" : "REIHENFOLGE";
+        if (_setupStep == 3) {
+            return tr("SCALE", "UMFANG", "FORMAT");
+        }
+        return _singleMode
+            ? tr("EXERCISE", "UEBUNG", "EXERCICE")
+            : tr("ORDER", "REIHENFOLGE", "ORDRE");
     }
 
     function getSetupChoice(index) {
         if (_setupStep == 0) {
-            return index == 0 ? "GANZER RUN" : "EINZEL-UEBUNG";
+            var languages = ["ENGLISH", "DEUTSCH", "FRANCAIS"];
+            return languages[index];
         }
         if (_setupStep == 1) {
+            return index == 0
+                ? tr("FULL RACE", "GANZER RUN", "COURSE COMPLETE")
+                : tr("SINGLE STATION", "EINZEL-UEBUNG", "EXERCICE SEUL");
+        }
+        if (_setupStep == 2) {
             var divisions = [
-                "WOMEN OPEN", "MEN OPEN", "WOMEN PRO", "MEN PRO"
+                tr("WOMEN OPEN", "DAMEN OPEN", "FEMMES OPEN"),
+                tr("MEN OPEN", "HERREN OPEN", "HOMMES OPEN"),
+                tr("WOMEN PRO", "DAMEN PRO", "FEMMES PRO"),
+                tr("MEN PRO", "HERREN PRO", "HOMMES PRO")
             ];
             return divisions[index];
         }
-        if (_setupStep == 2) {
+        if (_setupStep == 3) {
             var scales = ["25 %", "50 %", "100 %"];
             return scales[index];
         }
@@ -965,7 +1007,7 @@ class RaceCircuitView extends Ui.View {
             width / 2,
             (height * 75) / 100,
             Gfx.FONT_XTINY,
-            "WISCHEN + START",
+            tr("SWIPE + START", "WISCHEN + START", "GLISSER + START"),
             Gfx.TEXT_JUSTIFY_CENTER
         );
     }
@@ -1024,7 +1066,9 @@ class RaceCircuitView extends Ui.View {
             centerX,
             (height * 73) / 100,
             Gfx.FONT_XTINY,
-            _reorderMoving ? "WISCHEN: VERSCHIEBEN" : "START: VERSCHIEBEN",
+            _reorderMoving
+                ? tr("SWIPE: MOVE", "WISCHEN: SCHIEBEN", "GLISSER: DEPLACER")
+                : tr("START: MOVE", "START: SCHIEBEN", "START: DEPLACER"),
             Gfx.TEXT_JUSTIFY_CENTER
         );
         dc.setColor(0x00E6A8, Gfx.COLOR_TRANSPARENT);
@@ -1040,7 +1084,7 @@ class RaceCircuitView extends Ui.View {
             centerX,
             (height * 82) / 100,
             Gfx.FONT_XTINY,
-            "MENU: FERTIG",
+            tr("MENU: DONE", "MENU: FERTIG", "MENU: FIN"),
             Gfx.TEXT_JUSTIFY_CENTER
         );
     }
@@ -1052,9 +1096,9 @@ class RaceCircuitView extends Ui.View {
 
         drawPanel(
             dc,
-            (width * 32) / 100,
+            (width * 21) / 100,
             (height * 8) / 100,
-            (width * 36) / 100,
+            (width * 58) / 100,
             (height * 8) / 100,
             18
         );
@@ -1063,7 +1107,7 @@ class RaceCircuitView extends Ui.View {
             centerX,
             (height * 10) / 100,
             Gfx.FONT_XTINY,
-            "RACE COMPANION",
+            tr("RACE COMPANION", "RENNBEGLEITER", "COMPAGNON COURSE"),
             Gfx.TEXT_JUSTIFY_CENTER
         );
 
@@ -1080,7 +1124,7 @@ class RaceCircuitView extends Ui.View {
             centerX,
             (height * 34) / 100,
             Gfx.FONT_SMALL,
-            "PIT CREW",
+            tr("READY", "BEREIT", "PRET"),
             Gfx.TEXT_JUSTIFY_CENTER
         );
 
@@ -1097,7 +1141,9 @@ class RaceCircuitView extends Ui.View {
             (width * 35) / 100,
             (height * 46) / 100,
             Gfx.FONT_SMALL,
-            _singleMode ? "1 UEBUNG" : "8 RUNS",
+            _singleMode
+                ? tr("1 EXERCISE", "1 UEBUNG", "1 EXERCICE")
+                : tr("8 RUNS", "8 LAEUFE", "8 COURSES"),
             Gfx.TEXT_JUSTIFY_CENTER
         );
         dc.drawText(
@@ -1150,7 +1196,7 @@ class RaceCircuitView extends Ui.View {
             centerX,
             (height * 72) / 100,
             Gfx.FONT_SMALL,
-            "PRESS  >",
+            tr("PRESS  >", "START  >", "START  >"),
             Gfx.TEXT_JUSTIFY_CENTER
         );
 
@@ -1302,7 +1348,9 @@ class RaceCircuitView extends Ui.View {
             centerX,
             (height * 84) / 100,
             Gfx.FONT_XTINY,
-            isBackConfirmationPending() ? "BACK 2X" : "PRESS  >",
+            isBackConfirmationPending()
+                ? tr("BACK 2X", "ZURUECK 2X", "RETOUR 2X")
+                : tr("PRESS  >", "START  >", "START  >"),
             Gfx.TEXT_JUSTIFY_CENTER
         );
     }
@@ -1313,9 +1361,19 @@ class RaceCircuitView extends Ui.View {
         } else if (_debriefPage == 1) {
             drawRunGraph(dc);
         } else if (_debriefPage == 2) {
-            drawStationPage(dc, 0, "STATIONS 1-4", "3 / 4");
+            drawStationPage(
+                dc,
+                0,
+                tr("STATIONS 1-4", "STATIONEN 1-4", "ATELIERS 1-4"),
+                "3 / 4"
+            );
         } else {
-            drawStationPage(dc, 4, "STATIONS 5-8", "4 / 4");
+            drawStationPage(
+                dc,
+                4,
+                tr("STATIONS 5-8", "STATIONEN 5-8", "ATELIERS 5-8"),
+                "4 / 4"
+            );
         }
     }
 
@@ -1326,9 +1384,9 @@ class RaceCircuitView extends Ui.View {
 
         drawPanel(
             dc,
-            (width * 32) / 100,
+            (width * 20) / 100,
             (height * 5) / 100,
-            (width * 36) / 100,
+            (width * 60) / 100,
             (height * 8) / 100,
             18
         );
@@ -1337,7 +1395,7 @@ class RaceCircuitView extends Ui.View {
             centerX,
             (height * 7) / 100,
             Gfx.FONT_XTINY,
-            "DEBRIEF  " + page,
+            tr("SUMMARY  ", "AUSWERTUNG  ", "BILAN  ") + page,
             Gfx.TEXT_JUSTIFY_CENTER
         );
         dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_TRANSPARENT);
@@ -1355,7 +1413,11 @@ class RaceCircuitView extends Ui.View {
         var height = dc.getHeight();
         var centerX = width / 2;
 
-        drawDebriefHeader(dc, "COMPLETE", "1 / 4");
+        drawDebriefHeader(
+            dc,
+            tr("COMPLETE", "FERTIG", "TERMINE"),
+            "1 / 4"
+        );
 
         drawPanel(
             dc,
@@ -1443,7 +1505,7 @@ class RaceCircuitView extends Ui.View {
                 centerX,
                 (height * 82) / 100,
                 Gfx.FONT_XTINY,
-                "APP BEENDEN",
+                tr("EXIT APP", "APP BEENDEN", "QUITTER APP"),
                 Gfx.TEXT_JUSTIFY_CENTER
             );
         } else {
@@ -1452,7 +1514,11 @@ class RaceCircuitView extends Ui.View {
                 centerX,
                 (height * 81) / 100,
                 Gfx.FONT_XTINY,
-                "START >  MENU RESET",
+                tr(
+                    "START >  MENU RESET",
+                    "START >  MENU RESET",
+                    "START >  MENU REINIT"
+                ),
                 Gfx.TEXT_JUSTIFY_CENTER
             );
         }
@@ -1483,7 +1549,11 @@ class RaceCircuitView extends Ui.View {
             }
         }
 
-        drawDebriefHeader(dc, "RUN PACE", "2 / 4");
+        drawDebriefHeader(
+            dc,
+            tr("RUN PACE", "LAUFTEMPO", "ALLURE"),
+            "2 / 4"
+        );
 
         var left = (width * 14) / 100;
         var right = (width * 86) / 100;
@@ -1565,7 +1635,7 @@ class RaceCircuitView extends Ui.View {
             width / 2,
             (height * 79) / 100,
             Gfx.FONT_XTINY,
-            "BEST " + formatPace(minPace),
+            tr("BEST ", "BESTE ", "MEILLEUR ") + formatPace(minPace),
             Gfx.TEXT_JUSTIFY_CENTER
         );
         dc.setColor(0x00E6A8, Gfx.COLOR_TRANSPARENT);
@@ -1573,7 +1643,8 @@ class RaceCircuitView extends Ui.View {
             width / 2,
             (height * 85) / 100,
             Gfx.FONT_XTINY,
-            "AVG  " + formatPace(getAverageRunPace()),
+            tr("AVG  ", "SCHNITT  ", "MOYENNE  ") +
+                formatPace(getAverageRunPace()),
             Gfx.TEXT_JUSTIFY_CENTER
         );
     }
@@ -1640,7 +1711,7 @@ class RaceCircuitView extends Ui.View {
                 width / 2,
                 (height * 82) / 100,
                 Gfx.FONT_XTINY,
-                "APP BEENDEN",
+                tr("EXIT APP", "APP BEENDEN", "QUITTER APP"),
                 Gfx.TEXT_JUSTIFY_CENTER
             );
         } else {
@@ -1649,7 +1720,11 @@ class RaceCircuitView extends Ui.View {
                 width / 2,
                 (height * 82) / 100,
                 Gfx.FONT_XTINY,
-                "START >  MENU RESET",
+                tr(
+                    "START >  MENU RESET",
+                    "START >  MENU RESET",
+                    "START >  MENU REINIT"
+                ),
                 Gfx.TEXT_JUSTIFY_CENTER
             );
         }

@@ -9,7 +9,7 @@ fitness brand. Product and company names are intentionally omitted from the app.
 ## Screenshots
 
 <p align="center">
-  <img src="docs/screenshots/setup.png" alt="Race mode setup in the Garmin Venu 3 simulator" width="31%">
+  <img src="docs/screenshots/setup.png" alt="Language setup in the Garmin Venu 3 simulator" width="31%">
   <img src="docs/screenshots/order.png" alt="Workout order setup in the Garmin Venu 3 simulator" width="31%">
   <img src="docs/screenshots/active.png" alt="Active training screen in the Garmin Venu 3 simulator" width="31%">
 </p>
@@ -19,6 +19,7 @@ fitness brand. Product and company names are intentionally omitted from the app.
 ## Features
 
 - Full race or single-station mode
+- First-launch language selection: English, German, or French
 - Women/Men and Open/Pro load presets
 - 25%, 50%, or 100% distance and repetition scaling
 - Freely reorderable workout stations
@@ -36,6 +37,7 @@ session results.
 
 ## Controls
 
+- First setup step: choose English, German, or French
 - Swipe in setup: change selection
 - Start key: confirm a selection
 - Start key on the order screen: enter or leave move mode
