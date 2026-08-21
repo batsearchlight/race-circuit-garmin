@@ -11,10 +11,16 @@ fitness brand. Product and company names are intentionally omitted from the app.
 <p align="center">
   <img src="docs/screenshots/setup.png" alt="Language setup in the Garmin Venu 3 simulator" width="31%">
   <img src="docs/screenshots/order.png" alt="Workout order setup in the Garmin Venu 3 simulator" width="31%">
-  <img src="docs/screenshots/active.png" alt="Active training screen in the Garmin Venu 3 simulator" width="31%">
+  <img src="docs/screenshots/active.png" alt="Active run screen in the Garmin Venu 3 simulator" width="31%">
 </p>
 
-<p align="center"><sub>Garmin Venu 3 simulator: setup, station order, and active session.</sub></p>
+<p align="center">
+  <img src="docs/screenshots/activity-station.png" alt="Active station screen in the Garmin Venu 3 simulator" width="31%">
+  <img src="docs/screenshots/stats-summary.png" alt="Post-race summary with mock data in the Garmin Venu 3 simulator" width="31%">
+  <img src="docs/screenshots/stats-pace.png" alt="Post-race pace statistics with mock data in the Garmin Venu 3 simulator" width="31%">
+</p>
+
+<p align="center"><sub>Garmin Venu 3 simulator in English. The two statistics screens use mock workout data.</sub></p>
 
 ## Features
 
